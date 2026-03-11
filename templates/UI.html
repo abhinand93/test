@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agmarknet Farmer Insights Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --soil: #2C1A0E;
+      --earth: #5C3D1E;
+      --wheat: #D4A853;
+      --harvest: #E8C06A;
+      --green: #3A7D44;
+      --leaf: #52A65A;
+      --sky: #EAF4F0;
+      --cream: #FDF6E3;
+      --red: #C0392B;
+      --orange: #E67E22;
+      --blue: #2980B9;
+      --card: #FFFEF7;
+      --border: #E8DCC8;
+      --text: #2C1A0E;
+      --muted: #7A6552;
+      --shadow: 0 4px 24px rgba(44, 26, 14, .10);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      background: var(--cream);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background-image: radial-gradient(ellipse at 10% 0%, rgba(212, 168, 83, .13) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 100%, rgba(58, 125, 68, .10) 0%, transparent 50%);
+    }
+
+    /* HEADER */
+    header {
+      background: var(--soil);
+      padding: 26px 40px 20px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+      border-bottom: 4px solid var(--wheat);
+    }
+
+    .hdr-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: var(--harvest);
+      line-height: 1.1;
+    }
+
+    .hdr-sub {
+      color: rgba(255, 255, 255, .5);
+      font-size: .82rem;
+      margin-top: 4px;
+      font-weight: 300;
+    }
+
+    .hdr-pills {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(212, 168, 83, .35);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: .76rem;
+      color: var(--harvest);
+      font-weight: 500;
+    }
+
+    /* UPLOAD */
+    #upload-zone {
+      max-width: 520px;
+      margin: 40px auto;
+      border: 2.5px dashed var(--wheat);
+      border-radius: 18px;
+      padding: 46px 28px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--card);
+      transition: all .2s;
+    }
+
+    #upload-zone:hover {
+      background: #fff9ec;
+      border-color: var(--earth);
+    }
+
+    #upload-zone .icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+    }
+
+    #upload-zone h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--earth);
+    }
+
+    #upload-zone p {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: 7px;
+      line-height: 1.5;
+    }
+
+    .btn-generic {
+      margin-top: 18px;
+      padding: 10px 26px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: .86rem;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background .2s;
+    }
+
+    .btn-generic:hover {
+      background: #2d6336;
+    }
+
+    #file-input {
+      display: none;
+    }
+
+    /* DASHBOARD */
+    #dashboard {
+      display: none;
+      padding: 28px 40px 56px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    /* KPI CARDS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 20px 16px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s;
+    }
+
+    .kpi:hover {
+      transform: translateY(-3px);
+    }
+
+    .kpi::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--ac, var(--wheat));
+    }
+
+    .kpi .lbl {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .kpi .val {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.85rem;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .kpi .sub {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .kpi .em {
+      font-size: 1.4rem;
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      opacity: .55;
+    }
+
+    /* PAGINATION BADGE */
+    .pag-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 22px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .pag-banner .pag-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pag-banner .pag-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.35rem;
+      color: var(--earth);
+    }
+
+    .pag-banner .pag-lbl {
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .pag-banner .divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+    }
+
+    /* SECTION */
+    .section {
+      margin-bottom: 38px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--earth);
+      margin-bottom: 16px;
+      padding-bottom: 9px;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    /* CHART GRIDS */
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .g3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 22px;
+    }
+
+    .g1 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+    }
+
+    @media(max-width:1100px) {
+      .g3 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media(max-width:780px) {
+
+      .g2,
+      .g3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-card h3 {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .cw {
+      position: relative;
+      height: 270px;
+    }
+
+    .cw-tall {
+      position: relative;
+      height: 340px;
+    }
+
+    .cw-short {
+      position: relative;
+      height: 210px;
+    }
+
+    /* RECOMMENDATION CARDS */
+    .rec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .rec-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: var(--shadow);
+      border-left: 5px solid var(--ac, var(--wheat));
+      transition: transform .2s;
+    }
+
+    .rec-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .rec-card .vname {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--earth);
+      margin-bottom: 5px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 10px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .b-sell {
+      background: #d4edda;
+      color: #1a6130;
+    }
+
+    .b-wait {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .b-store {
+      background: #cce5ff;
+      color: #004085;
+    }
+
+    .b-choose {
+      background: #fde8d8;
+      color: #7d3800;
+    }
+
+    .b-other {
+      background: #e2e3e5;
+      color: #383d41;
+    }
+
+    .rec-card .reason {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .rec-card .prow {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pchip {
+      background: var(--sky);
+      border-radius: 7px;
+      padding: 4px 10px;
+      font-size: .75rem;
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .pchip.red {
+      color: var(--red);
+      background: #fde8e8;
+    }
+
+    /* TABLE */
+    .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+
+    thead {
+      background: var(--soil);
+      color: var(--harvest);
+    }
+
+    thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: .72rem;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #fffbf0;
+    }
+
+    tbody td {
+      padding: 9px 14px;
+      white-space: nowrap;
+    }
+
+    .up {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .dn {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    /* TREND INDICATOR */
+    .trend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+
+    .trend-up {
+      background: var(--green);
+    }
+
+    .trend-dn {
+      background: var(--red);
+    }
+
+    .trend-eq {
+      background: var(--wheat);
+    }
+
+    footer {
+      text-align: center;
+      padding: 22px;
+      color: var(--muted);
+      font-size: .76rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .agmarknet-container {
+      padding: 28px 40px 0;
+      max-width: 1440px;
+      margin: auto;
+    }
+
+    .agmarknet-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      align-items: end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+
+    .submit-btn {
+      padding: 12px 20px;
+      background: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .submit-btn:hover {
+      background: #1b5e20;
+    }
+
+    .error-box {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <div class="hdr-title">🌾 Agmarknet Farmer Insights</div>
+    </div>
+    <div class="hdr-pills" id="hdr-pills"></div>
+  </header>
+
+
+
+
+  <div class="agmarknet-container">
+
+    {% if error %}
+    <div class="error-box">
+      <strong>Error:</strong> {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="/get-agmarknet-data" method="GET" id="agmarknet-form" class="agmarknet-form"
+          onsubmit="stripEmptyParams(event)">
+
+      <!-- Date Filters -->
+      <div class="form-group">
+        <label for="from-date">From Date</label>
+        <input type="date" id="from-date" name="from_date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="to-date">To Date</label>
+        <input type="date" id="to-date" name="to_date" required>
+      </div>
+
+      <!-- Commodity -->
+      <div class="form-group">
+        <label for="commodity-select">Commodity</label>
+        <select id="commodity-select" name="commodity">
+          <option value="">All Commodities</option>
+          {% for commodity in filters.commodities %}
+          <option value="{{ commodity.cmdt_id }}">{{ commodity.cmdt_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- State -->
+      <div class="form-group">
+        <label for="state-select">State</label>
+        <select id="state-select" name="state">
+          <option value="">All States</option>
+          {% for state in filters.states %}
+          <option value="{{ state.state_id }}">{{ state.state_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- District -->
+      <div class="form-group">
+        <label for="district-select">District</label>
+        <select id="district-select" name="district">
+          <option value="">All Districts</option>
+          {% for district in filters.districts %}
+          <option value="{{ district.district_id }}">{{ district.district_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Market -->
+      <div class="form-group">
+        <label for="market-select">Market</label>
+        <select id="market-select" name="market">
+          <option value="">All Markets</option>
+          {% for market in filters.markets %}
+          <option value="{{ market.market_id }}">{{ market.market_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Variety -->
+      <div class="form-group">
+        <label for="variety-select">Variety</label>
+        <select id="variety-select" name="variety">
+          <option value="">All Varieties</option>
+          {% for variety in filters.varieties %}
+          <option value="{{ variety.variety_id }}">{{ variety.variety_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Grade -->
+      <div class="form-group">
+        <label for="grade-select">Grade</label>
+        <select id="grade-select" name="grade">
+          <option value="">All Grades</option>
+          {% for grade in filters.grades %}
+          <option value="{{ grade.grade_id }}">{{ grade.grade_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Group -->
+      <div class="form-group">
+        <label for="group-select">Group</label>
+        <select id="group-select" name="group">
+          <option value="">All Groups</option>
+          {% for group in filters.groups %}
+          <option value="{{ group.group_id }}">{{ group.group_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <button type="submit" class="submit-btn">
+          Get Insights
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <div id="dashboard">
+
+    <!-- Pagination info banner -->
+    <div class="pag-banner" id="pag-banner"></div>
+
+    <!-- KPIs -->
+    <div class="section">
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </div>
+
+    <!-- Daily price trend -->
+    <div class="section">
+      <div class="section-title"><span>📈</span> Daily Price &amp; Arrival Trend</div>
+      <div class="g2">
+        <div class="chart-card">
+          <h3>Modal Price Over Time (₹/Quintal)</h3>
+          <div class="cw-tall"><canvas id="trendPriceChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Daily Arrivals (Metric Tonnes)</h3>
+          <div class="cw-tall"><canvas id="trendArrivalChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market comparison -->
+    <div class="section">
+      <div class="section-title"><span>🏪</span> Market Comparison</div>
+      <div class="g2">
+        <div class="chart-card">
+          <h3>Top Markets by Avg Modal Price (₹/Qtl)</h3>
+          <div class="cw-tall"><canvas id="mktPriceChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Top Markets by Total Arrivals (MT)</h3>
+          <div class="cw-tall"><canvas id="mktArrivalChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price spread / volatility -->
+    <div class="section">
+      <div class="section-title"><span>📊</span> Price Range &amp; Risk</div>
+      <div class="g3">
+        <div class="chart-card">
+          <h3>Min / Modal / Max Price by Market</h3>
+          <div class="cw"><canvas id="rangeChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Price Spread per Market (₹/Qtl)</h3>
+          <div class="cw"><canvas id="spreadChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Arrivals vs Modal Price (Bubble)</h3>
+          <div class="cw"><canvas id="bubbleChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="section">
+      <div class="section-title"><span>💡</span> Farmer Recommendations</div>
+      <div class="rec-grid" id="rec-grid"></div>
+    </div>
+
+    <!-- Full records table -->
+    <div class="section">
+      <div class="section-title"><span>📋</span> All Records</div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Market</th>
+                <th>District</th>
+                <th>State</th>
+                <th>Commodity</th>
+                <th>Variety</th>
+                <th>Grade</th>
+                <th>Min ₹</th>
+                <th>Modal ₹</th>
+                <th>Max ₹</th>
+                <th>Spread ₹</th>
+                <th>Arrivals (MT)</th>
+              </tr>
+            </thead>
+            <tbody id="records-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Agmarknet Farmer Insights Dashboard &nbsp;·&nbsp; Data from agmarknet.gov.in &nbsp;·&nbsp; For guidance only —
+    verify with your local mandi</footer>
+
+  <script>
+    // ── Palette ───────────────────────────────────────────────────────────────────
+    const PAL = ['#3A7D44', '#D4A853', '#C0392B', '#2980B9', '#8E44AD',
+      '#E67E22', '#16A085', '#F39C12', '#27AE60', '#2471A3',
+      '#CB4335', '#1E8449', '#B7950B', '#6C3483', '#117A65'];
+    const a = (hex, op) => hex + Math.round(op * 255).toString(16).padStart(2, '0');
+
+    const charts = {};
+    function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+    const gridOpts = { color: 'rgba(0,0,0,0.05)' };
+    const tickFont = { family: 'DM Sans', size: 11 };
+    const baseScales = {
+      x: { grid: { display: false }, ticks: { font: tickFont } },
+      y: { grid: gridOpts, ticks: { font: tickFont } }
+    };
+
+
+    // ── MAIN RENDER ───────────────────────────────────────────────────────────────
+    function render(data) {
+      document.getElementById('dashboard').style.display = 'block';
+      document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
+
+      const os = data.overall_summary || {};
+      const pag = data.pagination_info || {};
+      const vi = data.variety_insights || {};
+      const ms = data.market_summary || {};
+      const dt = data.daily_price_trend || {};
+      const recs = data.all_records || [];
+      const tmA = data.top_markets_by_arrival || [];
+      const tmP = data.top_markets_by_price || [];
+
+      // ── Header pills ────────────────────────────────────────────────
+      const dr = os.date_range || {};
+      document.getElementById('hdr-pills').innerHTML = `
+    <div class="pill">📅 ${dr.from || '—'} → ${dr.to || '—'}</div>
+    <div class="pill">📦 ${os.commodity || 'All'}</div>
+    <div class="pill">🗺 ${os.distinct_states || 0} States</div>
+    <div class="pill">🏪 ${os.distinct_markets || 0} Markets</div>`;
+
+      // ── Pagination banner ─────────────────────────────────────────
+      if (pag.total_count) {
+        document.getElementById('pag-banner').innerHTML = `
+      <div class="pag-item"><div class="pag-val">${(pag.total_count || 0).toLocaleString()}</div><div class="pag-lbl">Total Records</div></div>
+      <div class="divider"></div>
+      <div class="pag-item"><div class="pag-val">${pag.pages_fetched || 1} / ${pag.total_pages || 1}</div><div class="pag-lbl">Pages Fetched</div></div>
+      <div class="divider"></div>
+      <div class="pag-item"><div class="pag-val">${(pag.records_fetched || 0).toLocaleString()}</div><div class="pag-lbl">Records Loaded</div></div>
+      <div class="divider"></div>
+      <div class="pag-item"><div class="pag-val">${pag.items_per_page || 10}</div><div class="pag-lbl">Per Page</div></div>
+      ${pag.records_fetched < pag.total_count ?
+            `<div style="font-size:.78rem;color:var(--orange);margin-left:8px;">⚠ Partial data — ${pag.total_count - pag.records_fetched} records not fetched</div>` : ''}`;
+      } else {
+        document.getElementById('pag-banner').style.display = 'none';
+      }
+
+      // ── KPIs ──────────────────────────────────────────────────────
+      const ps = os.price_summary_inr_per_quintal || {};
+      const as = os.arrival_summary || {};
+      const varieties = Object.keys(vi);
+      const kpis = [
+        { lbl: 'Records Loaded', val: (recs.length).toLocaleString(), sub: 'across all pages', em: '📄', ac: '#3A7D44' },
+        { lbl: 'Markets', val: os.distinct_markets || 0, sub: 'unique mandis', em: '🏪', ac: '#D4A853' },
+        { lbl: 'Days of Data', val: os.distinct_dates || 0, sub: 'dates in range', em: '📅', ac: '#2980B9' },
+        { lbl: 'Avg Modal Price', val: `₹${(ps.avg_modal || 0).toLocaleString()}`, sub: 'per quintal', em: '💰', ac: '#E67E22' },
+        { lbl: 'Max Price', val: `₹${(ps.max_recorded || 0).toLocaleString()}`, sub: 'highest recorded', em: '🔺', ac: '#27AE60' },
+        { lbl: 'Total Arrivals', val: `${(as.total_metric_tonnes || 0).toFixed(1)} MT`, sub: 'metric tonnes', em: '🚛', ac: '#8E44AD' },
+      ];
+      document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
+    <div class="kpi" style="--ac:${k.ac}">
+      <div class="em">${k.em}</div>
+      <div class="lbl">${k.lbl}</div>
+      <div class="val">${k.val}</div>
+      <div class="sub">${k.sub}</div>
+    </div>`).join('');
+
+      // ── Daily trend charts ──────────────────────────────────────────
+      const sortedDates = Object.keys(dt).sort((a, b) => parseDMY(a) - parseDMY(b));
+      const trendPrices = sortedDates.map(d => dt[d].avg_modal_price);
+      const trendArrivals = sortedDates.map(d => dt[d].total_arrivals_mt);
+      const shortDates = sortedDates.map(d => d.replace(/-\d{4}$/, '').replace(/^(\d+)-(\d+).*/, '$1/$2'));
+
+      destroyChart('trendPrice');
+      charts['trendPrice'] = new Chart(document.getElementById('trendPriceChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: shortDates, datasets: [{
+            label: 'Avg Modal Price ₹/Qtl',
+            data: trendPrices,
+            borderColor: '#3A7D44', backgroundColor: a('#3A7D44', 0.08),
+            tension: 0.4, fill: true, pointRadius: 5, pointBackgroundColor: '#3A7D44',
+            borderWidth: 2.5,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { font: tickFont } },
+            tooltip: { callbacks: { label: ctx => `₹${ctx.parsed.y.toLocaleString()}/qtl` } }
+          },
+          scales: { ...baseScales, y: { ...baseScales.y, ticks: { ...baseScales.y.ticks, callback: v => '₹' + v.toLocaleString() } } }
+        }
+      });
+
+      destroyChart('trendArrival');
+      charts['trendArrival'] = new Chart(document.getElementById('trendArrivalChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: shortDates, datasets: [{
+            label: 'Arrivals (MT)',
+            data: trendArrivals,
+            backgroundColor: sortedDates.map((_, i) => a(PAL[i % PAL.length], 0.75)),
+            borderRadius: 5, borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { ...baseScales, y: { ...baseScales.y, ticks: { ...baseScales.y.ticks, callback: v => v + ' MT' } } }
+        }
+      });
+
+      // ── Market charts ───────────────────────────────────────────────
+      const topP = tmP.slice(0, 10);
+      const topA = tmA.slice(0, 10);
+
+      destroyChart('mktPrice');
+      charts['mktPrice'] = new Chart(document.getElementById('mktPriceChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: topP.map(m => m.market), datasets: [{
+            label: 'Avg Modal Price',
+            data: topP.map(m => m.avg_modal_price),
+            backgroundColor: topP.map((_, i) => a(PAL[i % PAL.length], 0.8)),
+            borderRadius: 6, borderWidth: 0,
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: gridOpts, ticks: { font: tickFont, callback: v => '₹' + v.toLocaleString() } },
+            y: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 10 } } }
+          }
+        }
+      });
+
+      destroyChart('mktArrival');
+      charts['mktArrival'] = new Chart(document.getElementById('mktArrivalChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: topA.map(m => m.market), datasets: [{
+            label: 'Total Arrivals MT',
+            data: topA.map(m => m.total_arrivals_mt),
+            backgroundColor: topA.map((_, i) => a(PAL[i % PAL.length], 0.8)),
+            borderRadius: 6, borderWidth: 0,
+          }]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: gridOpts, ticks: { font: tickFont, callback: v => v + ' MT' } },
+            y: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 10 } } }
+          }
+        }
+      });
+
+      // ── Price range chart (top 8 markets) ──────────────────────────
+      const rangeMarkets = topP.slice(0, 8);
+      destroyChart('range');
+      charts['range'] = new Chart(document.getElementById('rangeChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: rangeMarkets.map(m => m.market.replace(' APMC', '').substring(0, 15)),
+          datasets: [
+            { label: 'Min', data: rangeMarkets.map(m => ms[m.market]?.min_modal_price || 0), backgroundColor: a('#C0392B', 0.5), borderWidth: 0, borderRadius: 3 },
+            { label: 'Modal', data: rangeMarkets.map(m => ms[m.market]?.avg_modal_price || 0), backgroundColor: a('#3A7D44', 0.8), borderWidth: 0, borderRadius: 3 },
+            { label: 'Max', data: rangeMarkets.map(m => ms[m.market]?.max_modal_price || 0), backgroundColor: a('#D4A853', 0.6), borderWidth: 0, borderRadius: 3 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { font: tickFont, boxWidth: 10 } } },
+          scales: { ...baseScales, y: { ...baseScales.y, ticks: { ...baseScales.y.ticks, callback: v => '₹' + v.toLocaleString() } } }
+        }
+      });
+
+      // ── Price spread chart ─────────────────────────────────────────
+      const spreadData = rangeMarkets.map(m => {
+        const s = ms[m.market];
+        return s ? round2(s.max_modal_price - s.min_modal_price) : 0;
+      });
+      destroyChart('spread');
+      charts['spread'] = new Chart(document.getElementById('spreadChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: rangeMarkets.map(m => m.market.replace(' APMC', '').substring(0, 15)),
+          datasets: [{
+            label: 'Price Spread ₹',
+            data: spreadData,
+            backgroundColor: spreadData.map(v => v > 500 ? a('#C0392B', 0.75) : v > 200 ? a('#E67E22', 0.75) : a('#27AE60', 0.75)),
+            borderRadius: 6, borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => `Spread: ₹${ctx.parsed.y.toLocaleString()}/qtl` } }
+          },
+          scales: { ...baseScales, y: { ...baseScales.y, ticks: { ...baseScales.y.ticks, callback: v => '₹' + v.toLocaleString() } } }
+        }
+      });
+
+      // ── Bubble chart: arrivals vs modal price ──────────────────────
+      const bubData = topA.slice(0, 15).map((m, i) => ({
+        x: ms[m.market]?.avg_modal_price || 0,
+        y: m.total_arrivals_mt || 0,
+        r: Math.max(5, Math.min(30, (m.total_arrivals_mt || 0) * 2)),
+        label: m.market,
+      }));
+      destroyChart('bubble');
+      charts['bubble'] = new Chart(document.getElementById('bubbleChart').getContext('2d'), {
+        type: 'bubble',
+        data: {
+          datasets: bubData.map((d, i) => ({
+            label: d.label,
+            data: [d],
+            backgroundColor: a(PAL[i % PAL.length], 0.65),
+            borderColor: PAL[i % PAL.length], borderWidth: 1.5,
+          }))
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ₹${ctx.parsed.x.toLocaleString()}/qtl, ${ctx.parsed.y} MT` } }
+          },
+          scales: {
+            x: { grid: gridOpts, ticks: { font: tickFont, callback: v => '₹' + v.toLocaleString() }, title: { display: true, text: 'Modal Price ₹/Qtl', font: tickFont } },
+            y: { grid: gridOpts, ticks: { font: tickFont, callback: v => v + ' MT' }, title: { display: true, text: 'Arrivals MT', font: tickFont } },
+          }
+        }
+      });
+
+      // ── Recommendations ────────────────────────────────────────────
+      const badgeCls = r => r.includes('GOOD') ? 'b-sell' : r.includes('WAIT') ? 'b-wait' : r.includes('STORAGE') ? 'b-store' : r.includes('CHOOSE') ? 'b-choose' : 'b-other';
+      const acCol = r => r.includes('GOOD') ? '#27AE60' : r.includes('WAIT') ? '#F39C12' : r.includes('STORAGE') ? '#2980B9' : r.includes('CHOOSE') ? '#E67E22' : '#7f8c8d';
+      document.getElementById('rec-grid').innerHTML = Object.entries(vi).map(([v, d]) => {
+        const rec = d.farmer_recommendation || '';
+        const p = d.price_inr_per_quintal || {};
+        const best = d.best_market_to_sell || {};
+        const low = d.lowest_price_market || {};
+        return `<div class="rec-card" style="--ac:${acCol(rec)}">
+      <div class="vname">${v}</div>
+      <span class="badge ${badgeCls(rec)}">${rec}</span>
+      <div class="reason">${d.recommendation_reason || ''}</div>
+      <div class="prow">
+        <div class="pchip">Avg ₹${(p.avg_modal_price || 0).toLocaleString()}</div>
+        <div class="pchip">Best: ${best.market || '—'} ₹${(best.modal_price || 0).toLocaleString()}</div>
+        <div class="pchip red">Low: ${low.market || '—'} ₹${(low.modal_price || 0).toLocaleString()}</div>
+      </div>
+    </div>`;
+      }).join('');
+
+      // ── Records table ──────────────────────────────────────────────
+      const sorted = [...recs].sort((a, b) => parseDMY(b.date) - parseDMY(a.date));
+      document.getElementById('records-tbody').innerHTML = sorted.map(r => {
+        const spread = round2((r.max_price || 0) - (r.min_price || 0));
+        return `<tr>
+      <td>${r.date || '—'}</td>
+      <td><strong>${r.market || '—'}</strong></td>
+      <td>${r.district || '—'}</td>
+      <td>${r.state || '—'}</td>
+      <td>${r.commodity || '—'}</td>
+      <td>${r.variety || '—'}</td>
+      <td>${r.grade || '—'}</td>
+      <td class="dn">₹${(r.min_price || 0).toLocaleString()}</td>
+      <td><strong>₹${(r.modal_price || 0).toLocaleString()}</strong></td>
+      <td class="up">₹${(r.max_price || 0).toLocaleString()}</td>
+      <td>₹${spread.toLocaleString()}</td>
+      <td>${(r.arrivals || 0)} MT</td>
+    </tr>`;
+      }).join('');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────────
+    function round2(v) { return Math.round(v * 100) / 100; }
+    function parseDMY(s) {
+      // handles "08-03-2026" and "2026-03-08"
+      if (!s) return 0;
+      const p = s.split('-');
+      if (p.length !== 3) return 0;
+      return p[0].length === 4 ? new Date(s) : new Date(`${p[2]}-${p[1]}-${p[0]}`);
+    }
+
+
+    // ── Strip empty query params before form submit ───────────────────────────────
+    function stripEmptyParams(e) {
+      e.preventDefault();
+      const form = document.getElementById('agmarknet-form');
+      const url = new URL(form.action);
+      const formData = new FormData(form);
+      for (const [key, value] of formData.entries()) {
+        if (value && value.trim() !== '') {
+          url.searchParams.set(key, value.trim());
+        }
+      }
+      window.location.href = url.toString();
+    }
+
+    // Check for results from Jinja2
+    const resultsStr = `{{ results | safe if results else '' }}`;
+    if (resultsStr) {
+      try {
+        const data = JSON.parse(resultsStr);
+        // Delay slightly to ensure DOM is ready and charts can init
+        setTimeout(() => render(data), 100);
+      } catch (e) {
+        console.error("Error parsing results JSON:", e);
+      }
+    }
+  </script>
+</body>
+
+</html>
